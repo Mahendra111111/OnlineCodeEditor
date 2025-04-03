@@ -10,7 +10,6 @@ const Editor = () => {
   const { id } = useParams(); // Extract project ID from URL params
   const [output, setOutput] = useState("");
   const [error, setError] = useState(false);
-
   const [data, setData] = useState(null);
 
   // Fetch project data on mount
@@ -18,9 +17,7 @@ const Editor = () => {
     fetch(`${api_base_url}/getProject`, {
       mode: "cors",
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         token: localStorage.getItem("token"),
         projectId: id,
@@ -43,76 +40,68 @@ const Editor = () => {
 
   // Save project function
   const saveProject = () => {
-    const trimmedCode = code?.toString().trim(); // Ensure code is a string and trimmed
-    console.log("Saving code:", trimmedCode); // Debug log
-
+    const trimmedCode = code?.toString().trim();
     fetch(`${api_base_url}/saveProject`, {
       mode: "cors",
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         token: localStorage.getItem("token"),
         projectId: id,
-        code: trimmedCode, // Use the latest code state
+        code: trimmedCode,
       }),
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          toast.success(data.msg);
-        } else {
-          toast.error(data.msg);
-        }
+        data.success
+          ? toast.success("Code saved successfully!")
+          : toast.error("Failed to save code.");
       })
       .catch((err) => {
         console.error("Error saving project:", err);
-        toast.error("Failed to save the project.");
+        toast.error("Error: Could not save the project.");
       });
   };
 
-  // Shortcut handler for saving with Ctrl+S
-  const handleSaveShortcut = (e) => {
-    if (e.ctrlKey && e.key === "s") {
-      e.preventDefault(); // Prevent browser's default save behavior
-      saveProject(); // Call the save function
-    }
-  };
-
-  // Add and clean up keyboard event listener
+  // Keyboard shortcut (Ctrl+S) for saving
   useEffect(() => {
+    const handleSaveShortcut = (e) => {
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        saveProject();
+      }
+    };
     window.addEventListener("keydown", handleSaveShortcut);
     return () => {
       window.removeEventListener("keydown", handleSaveShortcut);
     };
-  }, [code]); // Reattach when `code` changes
+  }, [code]);
 
+  // Run project function
   const runProject = () => {
     fetch("https://emkc.org/api/v2/piston/execute", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        language: data.projLanguage,
-        version: data.version,
+        language: data?.projLanguage,
+        version: data?.version,
         files: [
           {
             filename:
-              data.name + data.projLanguage === "python"
+              data?.name +
+              (data?.projLanguage === "python"
                 ? ".py"
-                : data.projLanguage === "java"
+                : data?.projLanguage === "java"
                 ? ".java"
-                : data.projLanguage === "javascript"
+                : data?.projLanguage === "javascript"
                 ? ".js"
-                : data.projLanguage === "c"
+                : data?.projLanguage === "c"
                 ? ".c"
-                : data.projLanguage === "cpp"
+                : data?.projLanguage === "cpp"
                 ? ".cpp"
-                : data.projLanguage === "bash"
+                : data?.projLanguage === "bash"
                 ? ".sh"
-                : "",
+                : ""),
             content: code,
           },
         ],
@@ -120,41 +109,56 @@ const Editor = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setOutput(data.run.output);
-        setError(data.run.code === 1 ? true : false);
+        setError(data.run.code === 1);
       });
   };
 
   return (
     <>
       <Navbar />
-      <div className='flex flex-col sm:flex-row items-center justify-between h-screen'>
-        <div className='left w-full sm:w-1/2 h-1/2 sm:h-full'>
+      {/* Fix: Added mt-[70px] to push the editor below navbar */}
+      <div className="mt-[70px] flex flex-col sm:flex-row items-stretch justify-between h-[calc(100vh-70px)]">
+        {/* Left Section - Code Editor */}
+        <div className="w-full sm:w-1/2 h-full flex flex-col">
           <Editor2
-            onChange={(newCode) => {
-              console.log("New Code:", newCode);
-              setCode(newCode || "");
-            }}
-            theme='vs-dark'
-            height='100%'
-            width='100%'
-            language='python'
+            onChange={(newCode) => setCode(newCode || "")}
+            theme="vs-dark"
+            height="100%"
+            width="100%"
+            language="python"
             value={code}
           />
         </div>
-        <div className='right p-4 w-full sm:w-1/2 h-1/2 sm:h-full bg-[#27272a]'>
-          <div className='flex pb-3 border-b border-[#1e1e1f] items-center justify-between px-8'>
-            <p className='p-0 m-0'>Output</p>
-            <button
-              className=' w-10px px-5 rounded-xl  bg-blue-500 transition-all hover:bg-blue-600'
-              onClick={runProject}
-            >
-              ▶
-            </button>
+
+        {/* Right Section - Output */}
+        <div className="w-full sm:w-1/2 h-full bg-[#27272a] p-4 flex flex-col">
+          <div className="flex pb-3 border-b border-[#1e1e1f] items-center justify-between px-4">
+            <p className="text-lg text-white">Output</p>
+            <div className="flex gap-2">
+              {/* Run Button - Improved */}
+              <button
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all font-medium shadow-md"
+                onClick={runProject}
+                title="Run Code"
+              >
+                ▶ Run
+              </button>
+
+              {/* Save Button */}
+              <button
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-all font-medium shadow-md"
+                onClick={saveProject}
+                title="Save Code"
+              >
+                💾 Save
+              </button>
+            </div>
           </div>
           <pre
-            className={`w-full h-[75vh] ${error ? "text-red-500" : ""}`}
+            className={`flex-1 overflow-auto p-4 bg-[#1e1e1f] rounded-lg ${
+              error ? "text-red-500" : "text-white"
+            }`}
             style={{ whiteSpace: "pre-wrap" }}
           >
             {output}

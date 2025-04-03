@@ -1,5 +1,27 @@
-.heading{
-    font-size: 1.5rem;
-    font-weight: bolder;
-    color: white;
+.nav {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .nav {
+    padding: 0 12px;
+  }
+
+  .heading {
+    font-size: 18px;
+  }
+
+  .btnNormal {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
 }
