@@ -1,0 +1,12 @@
+button {
+    background-color: rgb(34, 33, 33);
+    color: white;
+    padding: 5px 10px;
+    margin-top: -5px;
+    border-radius: 10px;
+}
+
+
+.three-lines {
+    margin-right: -123px;
+}
